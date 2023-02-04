@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browser Wrapper</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        input {
+            outline: none;
+            height: 24px;
+            border: none;
+            padding: 0 5px;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        #tool-area {
+            width: 100%;
+            height: 100%;
+        }
+
+        #tool-bar {
+            width: 100%;
+            height: 40px;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            background-color: #eee;
+        }
+
+        #tool-bar>div {
+            font-weight: bold;
+            margin-left: 15px;
+        }
+
+        .button {
+            cursor: pointer;
+            padding: 2px 5px;
+            user-select: none;
+            border-radius: 4px;
+            background-color: #1890ff66;
+        }
+
+        .button:hover {
+            background-color: #1890ffaa;
+        }
+
+        #tool-main {
+            width: 100%;
+            border: none;
+            height: calc(100% - 40px);
+        }
+
+        #webview {
+            width: 100%;
+            height: 100%;
+        }
+
+        #show-information {
+            color: #00aa11;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="tool-area">
+        <div id="tool-bar">
+            <div id="url-input"><label>地址：<input id="url-setting" type="text" value="https://www.google.com"
+                        onkeyup="setUrl()"></label></div>
+            <div id="proxy-input"><label>代理：<input id="proxy-setting" type="text" value="http://127.0.0.1:10800"
+                        onkeyup="setProxy()"></label></div>
+            <div id="proxy-switch" class="button" onclick="toggleProxy()">代理开关</div>
+            <div id="refresh" class="button" onclick="refresh()">刷新页面</div>
+            <div id="open-devtool" class="button" onclick="openDevtool()">打开 devtool</div>
+            <div id="go-back" class="button" onclick="goBack()">返回</div>
+            <div id="show-information"></div>
+        </div>
+        <div id="tool-main">
+            <webview id="webview" allowpopups src="https://www.google.com"></webview>
+            <!-- <webview id="webview" src="https://chat.openai.com/"></webview> -->
+        </div>
+    </div>
+
+    <script>
+        const ipcRenderer = require("electron").ipcRenderer;
+        const urlSetting = document.querySelector("#url-setting");
+        const proxySetting = document.querySelector("#proxy-setting");
+        const proxySwitch = document.querySelector("#proxy-switch");
+        const information = document.querySelector("#show-information");
+        const webview = document.querySelector("#webview");
+
+        let oldUrlSetting = urlSetting.value;
+        let oldProxySetting = proxySetting.value;
+        let proxyOn = true;
+        let timer = null;
+
+        function setUrl() {
+            if (event.keyCode === 13) {
+                console.log(13);
+                if (oldUrlSetting === urlSetting.value) {
+                    return;
+                }
+                webview.loadURL(urlSetting.value);
+                oldUrlSetting = urlSetting.value;
+                setInformation(`加载：${urlSetting.value}`)
+            }
+        }
+
+        proxySwitchText(proxyOn);
+
+        function toggleProxy() {
+            if (proxyOn) {
+                // 关闭代理
+                oldProxySetting = null;
+                ipcRenderer.send('set-proxy', null);
+            }
+            else {
+                // 开启代理
+                setProxy();
+            }
+            proxyOn = !proxyOn;
+            proxySwitchText(proxyOn);
+        }
+
+        function proxySwitchText(proxyOn) {
+            if (proxyOn) {
+                proxySwitch.innerHTML = "代理开关：开";
+            }
+            else {
+                proxySwitch.innerHTML = "代理开关：关";
+            }
+        }
+
+        function refresh() {
+            webview.reloadIgnoringCache();
+            setInformation("刷新成功");
+        }
+
+        function setProxy() {
+            if (event.keyCode === 13) {
+                if (oldProxySetting === proxySetting.value) {
+                    return;
+                }
+                ipcRenderer.send('set-proxy', proxySetting.value);
+                oldProxySetting = proxySetting.value;
+                setInformation("代理更新成功");
+            }
+        }
+
+        function setInformation(info, seconds = 3) {
+            clearTimeout(timer);
+            information.innerHTML = info;
+            if (seconds !== null) {
+                timer = setTimeout(function () { information.innerHTML = ""; }, seconds * 1000);
+            }
+        }
+
+        function openDevtool() {
+            // webview.openDevTools({mode:'bottom'});
+            ipcRenderer.send('open-devtool', null);
+        }
+
+        function goBack() {
+            if (webview.canGoBack()) {
+                webview.goBack();
+            }
+            else {
+                setInformation("已经到第一页", 3);
+            }
+        }
+
+        webview.addEventListener("load-commit", function (e) {
+            // setInformation("页面加载中", null);
+        });
+
+        webview.addEventListener("did-start-loading", function (e) {
+
+        });
+
+        webview.addEventListener("did-finish-load", function (e) {
+            setInformation("页面加载完成", 3);
+        });
+    </script>
+</body>
+
+</html>

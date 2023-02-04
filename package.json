@@ -1,0 +1,31 @@
+{
+  "name": "browser-wrapper",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "build": {
+    "appId": "browser-wrapper",
+    "mac": {
+      "target": ["dmg","zip"]
+    },
+    "win": {
+      "target": ["portable"]
+    }
+},
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win --x64"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    
+  },
+  "devDependencies": {
+    "electron": "^22.2.0",
+    "electron-builder": "^23.6.0",
+    "electron-reloader": "^1.2.3",
+    "@electron/asar": "^3.2.3"
+  }
+}
