@@ -1,17 +1,23 @@
 {
-  "name": "browser-wrapper",
-  "version": "1.0.0",
+  "name": "gpt",
+  "version": "1.0.1",
   "description": "",
   "main": "main.js",
   "build": {
     "appId": "browser-wrapper",
     "mac": {
-      "target": ["dmg","zip"]
+      "target": [
+        "dmg",
+        "zip"
+      ]
     },
     "win": {
-      "target": ["portable"]
+      "icon": "./chatgpt-icon.png",
+      "target": [
+        "portable"
+      ]
     }
-},
+  },
   "scripts": {
     "start": "electron .",
     "dist": "electron-builder --win --x64"
@@ -19,9 +25,7 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "dependencies": {
-    
-  },
+  "dependencies": {},
   "devDependencies": {
     "electron": "^22.2.0",
     "electron-builder": "^23.6.0",

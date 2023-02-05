@@ -46,15 +46,14 @@ app.on("window-all-closed", function () {
   }
 });
 
-function setLocatProxy(win, proxyRules="http://127.0.0.1:10800") {
+function setLocatProxy(win, proxyRules = "http://127.0.0.1:10800") {
   win.webContents.session.setProxy({
     proxyRules,
   });
 }
 
 function xFrameOptionsHandler(win) {
-  // We set an intercept on incoming requests to disable x-frame-options
-  // headers.
+  // We set an intercept on incoming requests to disable x-frame-options headers.
   win.webContents.session.webRequest.onHeadersReceived(
     { urls: ["*://*/*"] },
     (d, c) => {
@@ -66,7 +65,6 @@ function xFrameOptionsHandler(win) {
       if (d.responseHeaders["referrer-policy"]) {
         delete d.responseHeaders["referrer-policy"];
       }
-
       c({ cancel: false, responseHeaders: d.responseHeaders });
     }
   );

@@ -51,11 +51,11 @@
             padding: 2px 5px;
             user-select: none;
             border-radius: 4px;
-            background-color: #1890ff66;
+            background-color: rgba(24, 144, 255, 0.7);
         }
 
         .button:hover {
-            background-color: #1890ffaa;
+            background-color: rgba(24, 144, 255, 1);
         }
 
         #tool-main {
@@ -70,7 +70,10 @@
         }
 
         #show-information {
+            max-width: 120px;
             color: #00aa11;
+            white-space: nowrap;
+            text-overflow: ellipsis;
         }
     </style>
 </head>
@@ -82,15 +85,16 @@
                         onkeyup="setUrl()"></label></div>
             <div id="proxy-input"><label>代理：<input id="proxy-setting" type="text" value="http://127.0.0.1:10800"
                         onkeyup="setProxy()"></label></div>
-            <div id="proxy-switch" class="button" onclick="toggleProxy()">代理开关</div>
-            <div id="refresh" class="button" onclick="refresh()">刷新页面</div>
-            <div id="open-devtool" class="button" onclick="openDevtool()">打开 devtool</div>
+            <div id="proxy-switch" class="button" onclick="toggleProxy()">代理</div>
+            <div id="refresh" class="button" onclick="refresh()">刷新</div>
+            <div id="open-devtool" class="button" onclick="openDevtool()">DevTool</div>
+            <div id="open-google" class="button" onclick="openUrl('https:\/\/www.google.com')">Google</div>
+            <div id="open-chatgpt" class="button" onclick="openUrl('https:\/\/chat.openai.com')">ChatGPT</div>
             <div id="go-back" class="button" onclick="goBack()">返回</div>
             <div id="show-information"></div>
         </div>
         <div id="tool-main">
             <webview id="webview" allowpopups src="https://www.google.com"></webview>
-            <!-- <webview id="webview" src="https://chat.openai.com/"></webview> -->
         </div>
     </div>
 
@@ -109,14 +113,18 @@
 
         function setUrl() {
             if (event.keyCode === 13) {
-                console.log(13);
-                if (oldUrlSetting === urlSetting.value) {
-                    return;
-                }
-                webview.loadURL(urlSetting.value);
-                oldUrlSetting = urlSetting.value;
-                setInformation(`加载：${urlSetting.value}`)
+                openUrl(urlSetting.value);
             }
+        }
+
+        function openUrl(url) {
+            if (oldUrlSetting.includes(url)) {
+                return;
+            }
+            webview.loadURL(url);
+            urlSetting.value = url;
+            oldUrlSetting = url;
+            setInformation(`加载：${url}`)
         }
 
         proxySwitchText(proxyOn);
@@ -137,10 +145,10 @@
 
         function proxySwitchText(proxyOn) {
             if (proxyOn) {
-                proxySwitch.innerHTML = "代理开关：开";
+                proxySwitch.innerHTML = "代理：开";
             }
             else {
-                proxySwitch.innerHTML = "代理开关：关";
+                proxySwitch.innerHTML = "代理：关";
             }
         }
 
@@ -169,7 +177,6 @@
         }
 
         function openDevtool() {
-            // webview.openDevTools({mode:'bottom'});
             ipcRenderer.send('open-devtool', null);
         }
 
@@ -183,11 +190,9 @@
         }
 
         webview.addEventListener("load-commit", function (e) {
-            // setInformation("页面加载中", null);
         });
 
         webview.addEventListener("did-start-loading", function (e) {
-
         });
 
         webview.addEventListener("did-finish-load", function (e) {
