@@ -33,6 +33,8 @@ input {
 }
 
 #tool-bar>div {
+    flex-grow: 0;
+    flex-shrink: 0;
     font-weight: bold;
     margin-left: 15px;
 }

@@ -1,10 +1,14 @@
-const { app, BrowserWindow, Menu, session, ipcMain, dialog } = require("electron");
-const os = require("os");
 const fs = require("fs");
-const path = require("path");
+const {
+  app,
+  Menu,
+  dialog,
+  session,
+  ipcMain,
+  BrowserWindow,
+} = require("electron");
 
 const filename = "gpt.json";
-const filepath = path.join(os.homedir(), filename);
 const proxyKey = "proxy";
 
 // try {
@@ -15,42 +19,43 @@ const proxyKey = "proxy";
 Menu.setApplicationMenu(null);
 
 let win;
-function createWindow() {
+async function createWindow() {
   win = new BrowserWindow({
     width: 1300,
     minWidth: 1200,
     height: 800,
     webPreferences: {
-      webSecurity: false,
       webviewTag: true,
+      webSecurity: false,
       nodeIntegration: true,
       contextIsolation: false,
     },
   });
 
-  win.loadFile("index.html");
-  afterCreateWindow();
+  await win.loadFile("index.html");
+  afterWindowCreated();
   // win.webContents.openDevTools();
-  // frameOptionsHandler(win);
+  // frameOptionsHandle(win);
 }
 
-const gotTheLock = app.requestSingleInstanceLock(null);
-if (!gotTheLock) {
-  // 获得锁失败表明已被占用，退出，不再创建
+if (app.requestSingleInstanceLock(null)) {
+  app.whenReady().then(createWindow);
 
-  app.quit();
-} else {
-  app.on("second-instance", (event, commandLine, workingDirectory, additionalData) => {
-    if (win) {
-      dialog.showMessageBox({ title: "提示", message: "已有程序在运行" });
-      if (win.isMinimized()) {
-        win.restore();
+  app.on(
+    "second-instance",
+    (event, commandLine, workingDirectory, additionalData) => {
+      if (win) {
+        dialog.showMessageBox({ title: "提示", message: "已有程序在运行" });
+        if (win.isMinimized()) {
+          win.restore();
+        }
+        win.focus();
       }
-      win.focus();
     }
-  });
-
-  app.whenReady().then(() => { createWindow(); });
+  );
+} else {
+  // 获锁失败，表示程序已运行
+  app.quit();
 }
 
 ipcMain.on("set-proxy", function (event, args) {
@@ -62,7 +67,10 @@ ipcMain.on("clear-cache", async function (event, args) {
   const cacheSize = await session.getCacheSize();
   await session.clearCache();
   await session.clearStorageData();
-  dialog.showMessageBox({ title: "提示", message: `缓存已清除（${(cacheSize / 1024 / 1024).toFixed(2)} MB）` });
+  dialog.showMessageBox({
+    title: "提示",
+    message: `缓存已清除（${(cacheSize / 1024 / 1024).toFixed(2)} MB）`,
+  });
 });
 
 ipcMain.on("open-devtool", function (event, args) {
@@ -71,17 +79,25 @@ ipcMain.on("open-devtool", function (event, args) {
 
 app.on("window-all-closed", function () {
   // darwin platform -> macOS
-  if (process.platform !== "darwin") { app.quit(); }
+  if (process.platform !== "darwin") {
+    app.quit();
+  }
 });
 
 // 代理
-function setLocatProxy(proxyRules = null) {
-  win.webContents.session.setProxy({ proxyRules, });
-  setConfig(proxyKey, proxyRules);
+function setLocatProxy({ proxy, disabled }) {
+  if (disabled) {
+    win.webContents.session.setProxy({ proxyRules: null });
+  } else if (proxy) {
+    win.webContents.session.setProxy({ proxyRules: proxy });
+  } else {
+    win.webContents.session.setProxy({ proxyRules: null });
+  }
+  setConfig({ proxy, disabled });
 }
 
 // 改同源安全
-function frameOptionsHandler(win) {
+function frameOptionsHandle(win) {
   // We set an intercept on incoming requests to disable x-frame-options headers.
   win.webContents.session.webRequest.onHeadersReceived(
     { urls: ["*://*/*"] },
@@ -99,13 +115,37 @@ function frameOptionsHandler(win) {
   );
 }
 
+// 监听网络请求错误
+function listenRequestError() {
+  win.webContents.session.webRequest.onErrorOccurred(({ error }) => {
+    const errorType = ["net::ERR_PROXY_CONNECTION_FAILED"];
+    if (!errorType.includes(error)) {
+      return;
+    }
+    let errorMessage = "请检查网络";
+    if ("net::ERR_PROXY_CONNECTION_FAILED" === error) {
+      errorMessage = "请检查网络或代理配置";
+    }
+    dialog.showMessageBox({
+      type: "error",
+      title: "请求出错",
+      message: `错误：${error}\r\n\r\n${errorMessage}`,
+    });
+  });
+}
+
 // 初始化
-function afterCreateWindow() {
+function afterWindowCreated() {
+  listenRequestError();
+
   const config = loadConfig();
   win.webContents.send("config-changed", JSON.stringify(config));
 
   const proxy = config[proxyKey];
-  if (proxy) { setLocatProxy(proxy); }
+  const isDisabled = config["disabled"];
+  if (proxy) {
+    setLocatProxy({ proxy, disabled: isDisabled });
+  }
 
   // 构建模式下隐藏devtool
   if (app.isPackaged) {
@@ -120,17 +160,32 @@ function loadConfig(key = "") {
   const json = JSON.parse(content);
   if (key) {
     return { key: json[key] };
-  }
-  else {
+  } else {
     return json;
   }
 }
 
-function setConfig(key, value) {
-  if (!key) { return; }
+// 持久化配置
+function setConfig(keyValues) {
+  if (!keyValues || Object.keys(keyValues).length === 0) {
+    return;
+  }
   const content = fs.readFileSync(filename, { encoding: "utf-8", flag: "a+" });
-  if (content.length === 0) return;
-  const json = JSON.parse(content);
-  json[key] = value;
-  fs.writeFileSync(filename, JSON.stringify(json), { encoding: "utf-8", flag: "w+" });
+  let config = {};
+  if (content.length === 0) {
+    config = {};
+  } else {
+    try {
+      config = JSON.parse(content);
+    } finally {
+      config = {};
+    }
+  }
+  Object.keys(keyValues).forEach((key) => {
+    config[key] = keyValues[key];
+  });
+  fs.writeFileSync(filename, JSON.stringify(config), {
+    encoding: "utf-8",
+    flag: "w+",
+  });
 }
