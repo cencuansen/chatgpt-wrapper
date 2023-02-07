@@ -39,7 +39,7 @@ function setInformation(info, seconds = 3) {
 //#region ipc events
 
 ipcRenderer.on("hide-devtool", function (event, args) {
-  // openDevtool.style.display = "none";
+  openDevtool.style.display = "none";
 });
 
 let isFirstLoad = true;
