@@ -79,7 +79,8 @@ async function openUrlHandle(url) {
   if (oldUrlSetting === url) {
     return;
   }
-  if (!url.startsWith("http") || !url.startsWith("https")) {
+  if (url.startsWith("file") || url.endsWith(".html")) { }
+  else if (!url.startsWith("http") || !url.startsWith("https")) {
     url = `https://${url}`;
   }
   await webview.loadURL(url);
