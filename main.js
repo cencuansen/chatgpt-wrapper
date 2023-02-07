@@ -38,9 +38,9 @@ async function createWindow() {
   // frameOptionsHandle(win);
 }
 
-if (app.requestSingleInstanceLock(null)) {
+// 限制单实例
+if (app.requestSingleInstanceLock(null)) {  
   app.whenReady().then(createWindow);
-
   app.on(
     "second-instance",
     (event, commandLine, workingDirectory, additionalData) => {
@@ -54,7 +54,6 @@ if (app.requestSingleInstanceLock(null)) {
     }
   );
 } else {
-  // 获锁失败，表示程序已运行
   app.quit();
 }
 
