@@ -1,4 +1,5 @@
 const { ipcRenderer } = require("electron");
+const path = require("path");
 const urlSetting = document.querySelector("#url-setting");
 const proxySetting = document.querySelector("#proxy-setting");
 const proxySwitch = document.querySelector("#proxy-switch");
@@ -58,7 +59,10 @@ ipcRenderer.on("config-changed", function (event, args) {
 
 ipcRenderer.on("config-response", function (event, args) {
   console.log("event in main script js", event);
-  console.log("config-response in main renderer main-script.js and got datas: ", args);
+  console.log(
+    "config-response in main renderer main-script.js and got datas: ",
+    args
+  );
   webview.send("config-response", args);
 });
 
@@ -74,10 +78,11 @@ async function openUrlHandle(url) {
   if (oldUrlSetting === url) {
     return;
   }
-  if (url.startsWith("file") || url.endsWith(".html")) { }
-  else if (!url.startsWith("http") || !url.startsWith("https")) {
+  if (url.startsWith("file") || url.endsWith(".html")) {
+  } else if (!url.startsWith("http") || !url.startsWith("https")) {
     url = `https://${url}`;
   }
+  console.log("opening url: ", url);
   await webview.loadURL(url);
   // urlSetting.value = url;
   // oldUrlSetting = url;
@@ -91,7 +96,10 @@ function toggleProxyHandle() {
     // 关闭代理
     oldProxySetting = null;
     proxySetting.disabled = true;
-    ipcRenderer.send("set-proxy", { disabled: true });
+    ipcRenderer.send("set-proxy", {
+      proxy: proxySetting.value,
+      disabled: true,
+    });
   } else {
     // 开启代理
     oldProxySetting = proxySetting.value;
@@ -137,17 +145,18 @@ function goBackHandle() {
 
 //#region webview events
 
-webview.addEventListener("load-commit", function (e) { });
+webview.addEventListener("load-commit", function (e) {});
 
-webview.addEventListener("did-start-loading", function (e) { });
+webview.addEventListener("did-start-loading", function (e) {});
 
 webview.addEventListener("did-finish-load", function (e) {
   setInformation("页面加载完成", 3);
-  const url = webview.getURL() || "";
-  if (url.startsWith("http:") || url.startsWith("https:")) {
-    urlSetting.value = webview.getURL();
-    oldUrlSetting = urlSetting.value;
+  let url = webview.getURL() ?? "";
+  if (url.startsWith("file")) {
+    url = "";
   }
+  urlSetting.value = url;
+  oldUrlSetting = urlSetting.value;
 });
 
 //#endregion
