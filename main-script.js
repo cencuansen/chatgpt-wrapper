@@ -15,11 +15,11 @@ let config = {};
 function proxySwitchText() {
   if (proxyOn) {
     proxySwitch.innerHTML = "代理：开";
-    information.innerHTML = "代理已开启"
+    setInformation("代理已开启", 3);
     proxySetting.disabled = false;
   } else {
     proxySwitch.innerHTML = "代理：关";
-    information.innerHTML = "代理已关闭"
+    setInformation("代理已关闭", 3);
     proxySetting.disabled = true;
   }
 }
@@ -44,15 +44,22 @@ ipcRenderer.on("hide-devtool", function (event, args) {
 
 ipcRenderer.on("config-changed", function (event, args) {
   config = JSON.parse(args);
-
   const newProxy = config["proxy"] || "";
   const disabled = config["disabled"] ?? true;
-  if (newProxy !== proxySetting.value) {
-    proxyOn = !disabled;
-    oldUrlSetting = newProxy;
-    proxySetting.value = newProxy;
-    proxySwitchText(proxyOn);
-  }
+  proxyOn = !disabled;
+  oldProxySetting = newProxy;
+  proxySetting.value = newProxy;
+  proxySwitchText(proxyOn);
+  ipcRenderer.send("set-proxy", {
+    proxy: proxySetting.value,
+    disabled: disabled,
+  });
+});
+
+ipcRenderer.on("config-response", function (event, args) {
+  console.log("event in main script js", event);
+  console.log("config-response in main renderer main-script.js and got datas: ", args);
+  webview.send("config-response", args);
 });
 
 //#endregion
@@ -78,6 +85,7 @@ async function openUrlHandle(url) {
 
 function toggleProxyHandle() {
   proxyOn = !proxyOn;
+  proxySwitchText();
   if (!proxyOn) {
     // 关闭代理
     oldProxySetting = null;
@@ -92,7 +100,6 @@ function toggleProxyHandle() {
       disabled: false,
     });
   }
-  proxySwitchText();
 }
 
 function refreshHandle() {
@@ -113,6 +120,7 @@ function setProxyHandle() {
 }
 
 function openDevtoolHandle() {
+  webview.openDevTools();
   ipcRenderer.send("open-devtool", null);
 }
 
@@ -128,9 +136,9 @@ function goBackHandle() {
 
 //#region webview events
 
-webview.addEventListener("load-commit", function (e) {});
+webview.addEventListener("load-commit", function (e) { });
 
-webview.addEventListener("did-start-loading", function (e) {});
+webview.addEventListener("did-start-loading", function (e) { });
 
 webview.addEventListener("did-finish-load", function (e) {
   setInformation("页面加载完成", 3);

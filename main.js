@@ -5,6 +5,7 @@ const {
   dialog,
   session,
   ipcMain,
+  BrowserView,
   BrowserWindow,
 } = require("electron");
 
@@ -29,6 +30,8 @@ async function createWindow() {
       webSecurity: false,
       nodeIntegration: true,
       contextIsolation: false,
+      nodeIntegrationInWorker: true,
+      nodeIntegrationInSubFrames: true,
     },
   });
 
@@ -39,7 +42,7 @@ async function createWindow() {
 }
 
 // 限制单实例
-if (app.requestSingleInstanceLock(null)) {  
+if (app.requestSingleInstanceLock(null)) {
   app.whenReady().then(createWindow);
   app.on(
     "second-instance",
@@ -70,6 +73,15 @@ ipcMain.on("clear-cache", async function (event, args) {
     title: "提示",
     message: `缓存已清除（${(cacheSize / 1024 / 1024).toFixed(2)} MB）`,
   });
+});
+
+ipcMain.on("config-request", async function (event, args) {
+  const json = loadConfig();
+  console.log("ipc main got config-request event and resopnse with: ", json);
+  if (win) {
+    win.webContents.send("config-response", json);
+    // console.log(win.webContents.session);
+  }
 });
 
 ipcMain.on("open-devtool", function (event, args) {
@@ -137,14 +149,13 @@ function listenRequestError() {
 function afterWindowCreated() {
   listenRequestError();
 
-  const config = loadConfig();
-  win.webContents.send("config-changed", JSON.stringify(config));
+  // const view = new BrowserView()
+  // win.setBrowserView(view)
+  // view.setBounds({ x: 0, y: 0, width: 1200, height: 300 })
+  // view.webContents.loadURL('https://www.baidu.com')
 
-  const proxy = config[proxyKey];
-  const isDisabled = config["disabled"];
-  if (proxy) {
-    setLocatProxy({ proxy, disabled: isDisabled });
-  }
+  const json = loadConfig();
+  win.webContents.send("config-changed", json);
 
   // 构建模式下隐藏devtool
   if (app.isPackaged) {
@@ -155,13 +166,8 @@ function afterWindowCreated() {
 // 配置
 function loadConfig(key = "") {
   const content = fs.readFileSync(filename, { encoding: "utf-8", flag: "a+" });
-  if (content.length === 0) return {};
-  const json = JSON.parse(content);
-  if (key) {
-    return { key: json[key] };
-  } else {
-    return json;
-  }
+  if (content.length === 0) return "{}";
+  else return content;
 }
 
 // 持久化配置
