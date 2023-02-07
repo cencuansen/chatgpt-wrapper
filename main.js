@@ -173,7 +173,7 @@ function afterWindowCreated() {
 }
 
 // 配置
-function loadConfig(key = "") {
+function loadConfig() {
   const content = fs.readFileSync(filename, { encoding: "utf-8", flag: "a+" });
   if (content.length === 0) return "{}";
   else return content;
@@ -191,7 +191,7 @@ function setConfig(keyValues) {
   } else {
     try {
       config = JSON.parse(content);
-    } finally {
+    } catch {
       config = {};
     }
   }
