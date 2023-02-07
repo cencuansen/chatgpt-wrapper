@@ -42,12 +42,7 @@ ipcRenderer.on("hide-devtool", function (event, args) {
   openDevtool.style.display = "none";
 });
 
-let isFirstLoad = true;
 ipcRenderer.on("config-changed", function (event, args) {
-  if (isFirstLoad) {
-    isFirstLoad = false;
-    console.log("config-changed in first: ", args);
-  }
   config = JSON.parse(args);
   const proxy = config["proxy"] ?? "";
   const disabled = config["disabled"] ?? true;
@@ -118,9 +113,9 @@ function clearCacheHandle() {
 }
 
 function setProxyHandle() {
-  let newProxy = proxySetting.value;
-  oldProxySetting = newProxy;
-  ipcRenderer.send("set-proxy", { proxy: newProxy, disabled: !proxyOn });
+  let proxy = proxySetting.value;
+  oldProxySetting = proxy;
+  ipcRenderer.send("set-proxy", { proxy: proxy, disabled: !proxyOn });
   proxySwitchText();
   setInformation("代理更新成功");
 }

@@ -145,7 +145,7 @@ function listenRequestError() {
       if ("net::ERR_PROXY_CONNECTION_FAILED" === error) {
         errorMessage = "请检查网络或代理配置";
       }
-      dialog.showMessageBox({
+      await dialog.showMessageBox({
         type: "error",
         title: "请求出错",
         message: `错误：${error}\r\n\r\n${errorMessage}`,
