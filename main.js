@@ -1,4 +1,5 @@
 const fs = require("fs");
+const path = require("path");
 const {
   app,
   Menu,
@@ -9,8 +10,8 @@ const {
   BrowserWindow,
 } = require("electron");
 
-const filename = "gpt.json";
-const proxyKey = "proxy";
+const filename = path.join(app.getPath("userData"), "gpt.json");
+console.log(filename);
 
 // try {
 //   // 实现热加载
@@ -128,20 +129,28 @@ function frameOptionsHandle(win) {
 
 // 监听网络请求错误
 function listenRequestError() {
-  win.webContents.session.webRequest.onErrorOccurred(({ error }) => {
-    const errorType = ["net::ERR_PROXY_CONNECTION_FAILED"];
-    if (!errorType.includes(error)) {
-      return;
+  win.webContents.session.webRequest.onErrorOccurred(async ({ error }) => {
+    if (!app.isPackaged) {
+      await dialog.showMessageBox({
+        type: "error",
+        title: "请求出错",
+        message: `错误：${error}`,
+      });
+    } else {
+      const errorType = ["net::ERR_PROXY_CONNECTION_FAILED"];
+      if (!errorType.includes(error)) {
+        return;
+      }
+      let errorMessage = "请检查网络";
+      if ("net::ERR_PROXY_CONNECTION_FAILED" === error) {
+        errorMessage = "请检查网络或代理配置";
+      }
+      dialog.showMessageBox({
+        type: "error",
+        title: "请求出错",
+        message: `错误：${error}\r\n\r\n${errorMessage}`,
+      });
     }
-    let errorMessage = "请检查网络";
-    if ("net::ERR_PROXY_CONNECTION_FAILED" === error) {
-      errorMessage = "请检查网络或代理配置";
-    }
-    dialog.showMessageBox({
-      type: "error",
-      title: "请求出错",
-      message: `错误：${error}\r\n\r\n${errorMessage}`,
-    });
   });
 }
 

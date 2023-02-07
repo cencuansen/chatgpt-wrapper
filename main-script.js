@@ -39,19 +39,24 @@ function setInformation(info, seconds = 3) {
 //#region ipc events
 
 ipcRenderer.on("hide-devtool", function (event, args) {
-  openDevtool.style.display = "none";
+  // openDevtool.style.display = "none";
 });
 
+let isFirstLoad = true;
 ipcRenderer.on("config-changed", function (event, args) {
+  if (isFirstLoad) {
+    isFirstLoad = false;
+    console.log("config-changed in first: ", args);
+  }
   config = JSON.parse(args);
-  const newProxy = config["proxy"] || "";
+  const proxy = config["proxy"] ?? "";
   const disabled = config["disabled"] ?? true;
   proxyOn = !disabled;
-  oldProxySetting = newProxy;
-  proxySetting.value = newProxy;
+  oldProxySetting = proxy;
+  proxySetting.value = proxy;
   proxySwitchText(proxyOn);
   ipcRenderer.send("set-proxy", {
-    proxy: proxySetting.value,
+    proxy: proxy,
     disabled: disabled,
   });
 });
