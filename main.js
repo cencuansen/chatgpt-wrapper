@@ -1,17 +1,8 @@
 const fs = require("fs");
 const path = require("path");
-const {
-  app,
-  Menu,
-  dialog,
-  session,
-  ipcMain,
-  BrowserView,
-  BrowserWindow,
-} = require("electron");
+const { app, Menu, dialog, ipcMain, BrowserWindow } = require("electron");
 
 const filename = path.join(app.getPath("userData"), "gpt.json");
-console.log(filename);
 
 // try {
 //   // 实现热加载
@@ -142,7 +133,7 @@ function listenRequestError() {
       if ("net::ERR_PROXY_CONNECTION_FAILED" === error) {
         errorMessage = "请检查网络或代理配置";
       }
-      dialog.showMessageBox({
+      await dialog.showMessageBox({
         type: "error",
         title: "请求出错",
         message: `错误：${error}\r\n\r\n${errorMessage}`,
@@ -155,10 +146,42 @@ function listenRequestError() {
 function afterWindowCreated() {
   listenRequestError();
 
-  // const view = new BrowserView()
-  // win.setBrowserView(view)
-  // view.setBounds({ x: 0, y: 0, width: 1200, height: 300 })
-  // view.webContents.loadURL('https://www.baidu.com')
+  // console.log("dir ", __dirname);
+  // console.log("home ", app.getPath("home"));
+  // console.log("appData ", app.getPath("appData"));
+  // console.log("userData ", app.getPath("userData"));
+  // console.log("sessionData ", app.getPath("sessionData"));
+  // console.log("temp ", app.getPath("temp"));
+  // console.log("exe ", app.getPath("exe"));
+  // console.log("module ", app.getPath("module"));
+  // console.log("desktop ", app.getPath("desktop"));
+  // console.log("documents ", app.getPath("documents"));
+  // console.log("downloads ", app.getPath("downloads"));
+  // console.log("music ", app.getPath("music"));
+  // console.log("pictures ", app.getPath("pictures"));
+  // console.log("videos ", app.getPath("videos"));
+  // console.log("recent ", app.getPath("recent"));
+  // console.log("logs ", app.getPath("logs"));
+  // console.log("crashDumps ", app.getPath("crashDumps"));
+
+  setConfig({
+    dir: __dirname,
+    exe: app.getPath("exe"),
+    temp: app.getPath("temp"),
+    home: app.getPath("home"),
+    logs: app.getPath("logs"),
+    recent: app.getPath("recent"),
+    videos: app.getPath("videos"),
+    module: app.getPath("module"),
+    appData: app.getPath("appData"),
+    desktop: app.getPath("desktop"),
+    pictures: app.getPath("pictures"),
+    userData: app.getPath("userData"),
+    downloads: app.getPath("downloads"),
+    documents: app.getPath("documents"),
+    crashDumps: app.getPath("crashDumps"),
+    sessionData: app.getPath("sessionData"),
+  });
 
   const json = loadConfig();
   win.webContents.send("config-changed", json);

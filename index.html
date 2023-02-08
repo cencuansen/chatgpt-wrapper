@@ -14,19 +14,21 @@
         <div id="tool-bar">
             <div id="url-input">
                 <label>
-                    地址：<input id="url-setting" type="text" value=""
-                        onkeyup="(event.keyCode === 13 ? setUrlHandle() : null)">
+                    地址：
+                    <input id="url-setting" type="text" value="" onkeyup="if (event.keyCode === 13) setUrlHandle()">
                 </label>
             </div>
             <div id="proxy-input">
-                <label>代理：<input id="proxy-setting" type="text" value=""
-                        onkeyup="(event.keyCode === 13 ? setProxyHandle() : null)"></label>
+                <label>
+                    代理：
+                    <input id="proxy-setting" type="text" value="" onkeyup="if (event.keyCode === 13) setProxyHandle()">
+                </label>
             </div>
             <div id="proxy-switch" class="button" onclick="toggleProxyHandle()">代理</div>
             <div id="refresh" class="button" onclick="refreshHandle()">刷新</div>
             <div id="clear-cache" class="button" onclick="clearCacheHandle()">清缓存</div>
             <div id="open-devtool" class="button" onclick="openDevtoolHandle()">DevTool</div>
-            <div id="open-home" class="button" onclick="openUrlHandle('file:\/\/\/welcome.html')">主页</div>
+            <div id="open-home" class="button" onclick="openUrlHandle(path.join(__dirname, 'welcome.html'))">主页</div>
             <div id="open-baidu" class="button" onclick="openUrlHandle('https:\/\/www.baidu.com')">Baidu</div>
             <div id="open-google" class="button" onclick="openUrlHandle('https:\/\/www.google.com')">Google</div>
             <div id="open-chatgpt" class="button" onclick="openUrlHandle('https:\/\/chat.openai.com')">ChatGPT</div>
