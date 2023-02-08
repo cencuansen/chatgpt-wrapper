@@ -45,18 +45,15 @@ async function createWindow() {
 // 限制单实例
 if (app.requestSingleInstanceLock(null)) {
   app.whenReady().then(createWindow);
-  app.on(
-    "second-instance",
-    (event, commandLine, workingDirectory, additionalData) => {
-      if (win) {
-        dialog.showMessageBox({ title: "提示", message: "已有程序在运行" });
-        if (win.isMinimized()) {
-          win.restore();
-        }
-        win.focus();
+  app.on("second-instance", () => {
+    if (win) {
+      dialog.showMessageBox({ title: "提示", message: "已有程序在运行" });
+      if (win.isMinimized()) {
+        win.restore();
       }
+      win.focus();
     }
-  );
+  });
 } else {
   app.quit();
 }
