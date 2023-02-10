@@ -74,7 +74,7 @@ async function setUrlHandle() {
   await openUrlHandle(urlSetting.value);
 }
 
-async function openUrlHandle(url) {
+async function openUrlHandle(url, needProxy = null) {
   if (oldUrlSetting === url) {
     return;
   }
@@ -83,14 +83,15 @@ async function openUrlHandle(url) {
     url = `https://${url}`;
   }
   console.log("opening url: ", url);
+  toggleProxyHandle(needProxy);
   await webview.loadURL(url);
   // urlSetting.value = url;
   // oldUrlSetting = url;
   setInformation(`加载：${url}`);
 }
 
-function toggleProxyHandle() {
-  proxyOn = !proxyOn;
+function toggleProxyHandle(needProxy = null) {
+  proxyOn = needProxy === null ? !proxyOn : needProxy;
   proxySwitchText();
   if (!proxyOn) {
     // 关闭代理
@@ -145,9 +146,9 @@ function goBackHandle() {
 
 //#region webview events
 
-webview.addEventListener("load-commit", function (e) {});
+webview.addEventListener("load-commit", function (e) { });
 
-webview.addEventListener("did-start-loading", function (e) {});
+webview.addEventListener("did-start-loading", function (e) { });
 
 webview.addEventListener("did-finish-load", function (e) {
   setInformation("页面加载完成", 3);
